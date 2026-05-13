@@ -9,15 +9,19 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable() // Désactive CSRF pour Postman
-            .authorizeHttpRequests()
-            .anyRequest().permitAll(); // Autorise tout pour le moment
-        return http.build();
-    }
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.csrf().disable()
+        .authorizeHttpRequests()
+        .requestMatchers("/h2-console/**").permitAll() // Autorise H2
+        .anyRequest().permitAll()
+        .and()
+        .headers().frameOptions().disable(); // Indispensable pour voir l'interface H2
+    return http.build();
+}
 
      @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+    
 }
