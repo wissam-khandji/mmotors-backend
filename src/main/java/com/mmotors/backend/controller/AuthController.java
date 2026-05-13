@@ -14,12 +14,10 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
+    private final com.mmotors.backend.config.JwtUtils jwtUtils;
 
     /**
      * Enregistre un nouvel utilisateur.
-     * 
-     * @param user Les données de l'utilisateur.
-     * @return L'utilisateur créé.
      */
     @PostMapping("/register")
     public User register(@RequestBody User user) {
@@ -27,14 +25,20 @@ public class AuthController {
     }
 
     /**
-     * Connecte un utilisateur.
-     * 
-     * @param loginRequest Objet contenant email et mot de passe.
-     * @return L'utilisateur connecté.
+     * Connecte un utilisateur et retourne un token JWT.
      */
     @PostMapping("/login")
-    public User login(@RequestBody LoginRequest loginRequest) {
-        return userService.login(loginRequest.getEmail(), loginRequest.getMotDePasse());
+    public AuthResponse login(@RequestBody LoginRequest loginRequest) {
+        User user = userService.login(loginRequest.getEmail(), loginRequest.getPassword());
+        String token = jwtUtils.generateToken(user.getEmail(), user.getRole().name());
+        return new AuthResponse(token, user);
+    }
+
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    public static class AuthResponse {
+        private String token;
+        private User user;
     }
 
     /**
@@ -43,6 +47,6 @@ public class AuthController {
     @lombok.Data
     public static class LoginRequest {
         private String email;
-        private String motDePasse;
+        private String password;
     }
 }
