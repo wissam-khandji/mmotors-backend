@@ -31,7 +31,7 @@
 
 **1. Cloner le repository :**
 ```bash
-git clone 
+git clone https://github.com/wissam-khandji/mmotors-backend.git
 ```
 
 **2. Lancer l'application** à la racine du projet :
