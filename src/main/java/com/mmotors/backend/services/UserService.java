@@ -17,7 +17,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final BCryptPasswordEncoder passwordEncoder;
 
     /**
      * Enregistre un nouvel utilisateur avec hachage du mot de passe.
