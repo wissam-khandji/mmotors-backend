@@ -29,7 +29,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public AuthResponse login(@RequestBody LoginRequest loginRequest) {
-        User user = userService.login(loginRequest.getEmail(), loginRequest.getPassword());
+        User user = userService.login(loginRequest.getEmail(), loginRequest.getMotDePasse());
         String token = jwtUtils.generateToken(user.getEmail(), user.getRole().name());
         return new AuthResponse(token, user);
     }
@@ -47,6 +47,6 @@ public class AuthController {
     @lombok.Data
     public static class LoginRequest {
         private String email;
-        private String password;
+        private String motDePasse;
     }
 }
