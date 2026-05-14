@@ -4,7 +4,11 @@ import axios from 'axios';
  * Instance Axios configurée pour communiquer avec l'API Spring Boot
  */
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  // On utilise la variable d'environnement définie dans Vercel
+  // Si elle n'existe pas (en local), on utilise localhost par défaut
+  baseURL: import.meta.env.VITE_API_URL 
+    ? `${import.meta.env.VITE_API_URL}/api` 
+    : 'http://localhost:8080/api',
   headers: {
     'Content-Type': 'application/json',
   },
