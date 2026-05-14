@@ -1,7 +1,10 @@
 package com.mmotors.backend.entities;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Lob;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +15,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Vehicle {
     
     @Id
@@ -33,5 +37,10 @@ public class Vehicle {
     
     @Enumerated(EnumType.STRING)
     private VehicleStatus statut;
-}
 
+    private int annee;
+
+    @Lob 
+    @Column(columnDefinition = "LONGTEXT")
+    private String imagePath;
+}

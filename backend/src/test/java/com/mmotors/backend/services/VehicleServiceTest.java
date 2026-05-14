@@ -38,8 +38,28 @@ class VehicleServiceTest {
     @DisplayName("Liste : Retourne tous les véhicules sans filtre")
     void findAll_ShouldReturnAllVehicles() {
         // GIVEN
-        Vehicle v1 = new Vehicle(1L, "Tesla", "Model 3", 10000, 35000, VehicleCategory.VENTE, VehicleStatus.DISPONIBLE);
-        Vehicle v2 = new Vehicle(2L, "BMW", "i4", 5000, 45000, VehicleCategory.LOCATION, VehicleStatus.DISPONIBLE);
+        Vehicle v1 = Vehicle.builder()
+                .id(1L)
+                .marque("Tesla")
+                .modele("Model 3")
+                .kilometrage(10000)
+                .prix(35000)
+                .annee(2023)
+                .categorie(VehicleCategory.VENTE)
+                .statut(VehicleStatus.DISPONIBLE)
+                .build();
+        
+        Vehicle v2 = Vehicle.builder()
+                .id(2L)
+                .marque("BMW")
+                .modele("i4")
+                .kilometrage(5000)
+                .prix(45000)
+                .annee(2022)
+                .categorie(VehicleCategory.LOCATION)
+                .statut(VehicleStatus.DISPONIBLE)
+                .build();
+        
         given(vehicleRepository.findAll()).willReturn(Arrays.asList(v1, v2));
 
         // WHEN
@@ -54,7 +74,17 @@ class VehicleServiceTest {
     @DisplayName("Filtre : Retourne uniquement les véhicules de la catégorie spécifiée")
     void findByCategory_ShouldReturnFilteredVehicles() {
         // GIVEN
-        Vehicle v1 = new Vehicle(1L, "Tesla", "Model 3", 10000, 35000, VehicleCategory.VENTE, VehicleStatus.DISPONIBLE);
+        Vehicle v1 = Vehicle.builder()
+                .id(1L)
+                .marque("Tesla")
+                .modele("Model 3")
+                .kilometrage(10000)
+                .prix(35000)
+                .annee(2023)
+                .categorie(VehicleCategory.VENTE)
+                .statut(VehicleStatus.DISPONIBLE)
+                .build();
+        
         given(vehicleRepository.findByCategorie(VehicleCategory.VENTE)).willReturn(List.of(v1));
 
         // WHEN
@@ -70,7 +100,17 @@ class VehicleServiceTest {
     @DisplayName("Bascule : VENTE vers LOCATION avec sauvegarde")
     void switchCategory_ShouldChangeVenteToLocation() {
         // GIVEN : Un véhicule initialement en VENTE
-        Vehicle vehicle = new Vehicle(1L, "Tesla", "Model 3", 10000, 35000, VehicleCategory.VENTE, VehicleStatus.DISPONIBLE);
+        Vehicle vehicle = Vehicle.builder()
+                .id(1L)
+                .marque("Tesla")
+                .modele("Model 3")
+                .kilometrage(10000)
+                .prix(35000)
+                .annee(2023)
+                .categorie(VehicleCategory.VENTE)
+                .statut(VehicleStatus.DISPONIBLE)
+                .build();
+        
         given(vehicleRepository.findById(1L)).willReturn(Optional.of(vehicle));
         given(vehicleRepository.save(any(Vehicle.class))).willReturn(vehicle);
 
@@ -89,7 +129,17 @@ class VehicleServiceTest {
     @DisplayName("Bascule : LOCATION vers VENTE avec sauvegarde")
     void switchCategory_ShouldChangeLocationToVente() {
         // GIVEN
-        Vehicle vehicle = new Vehicle(1L, "BMW", "i4", 5000, 45000, VehicleCategory.LOCATION, VehicleStatus.DISPONIBLE);
+        Vehicle vehicle = Vehicle.builder()
+                .id(1L)
+                .marque("BMW")
+                .modele("i4")
+                .kilometrage(5000)
+                .prix(45000)
+                .annee(2022)
+                .categorie(VehicleCategory.LOCATION)
+                .statut(VehicleStatus.DISPONIBLE)
+                .build();
+        
         given(vehicleRepository.findById(1L)).willReturn(Optional.of(vehicle));
         given(vehicleRepository.save(any(Vehicle.class))).willReturn(vehicle);
 

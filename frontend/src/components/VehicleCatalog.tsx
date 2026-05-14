@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
 import type { Vehicle } from '../types/auth';
-import { Car, Fuel, Gauge, Zap, Loader2, Calendar, Banknote, AlertCircle } from 'lucide-react';
+import { Car, Fuel, Gauge, Zap, Loader2, Calendar, Banknote, AlertCircle, Key, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
 
 /**
- * Composant Catalogue pour les clients - Données réelles API
+ * Composant Catalogue pour les clients - Données réelles API (LLD & Vente)
  */
 const VehicleCatalog: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -16,12 +16,11 @@ const VehicleCatalog: React.FC = () => {
     const fetchVehicles = async () => {
       try {
         setLoading(true);
-        // Appel GET vers http://localhost:8080/api/vehicles
         const response = await api.get<Vehicle[]>('/vehicles');
         setVehicles(response.data);
       } catch (err) {
         console.error('Erreur lors de la récupération des véhicules:', err);
-        setError('Impossible de charger le catalogue. Vérifiez que le serveur Spring Boot est lancé.');
+        setError('Impossible de charger le catalogue. Vérifiez que le serveur est lancé.');
       } finally {
         setLoading(false);
       }
@@ -34,87 +33,110 @@ const VehicleCatalog: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center p-12 gap-4">
         <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-        <p className="text-slate-500 animate-pulse">Chargement des véhicules...</p>
+        <p className="text-slate-500 animate-pulse font-medium">Chargement du parc M-Motors...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-100 p-6 rounded-2xl flex items-center gap-4 text-red-700">
-        <AlertCircle size={24} />
-        <p>{error}</p>
+      <div className="bg-red-50 border border-red-100 p-8 rounded-3xl flex items-center gap-4 text-red-700 shadow-sm">
+        <AlertCircle size={28} />
+        <div>
+          <p className="font-bold">Erreur de connexion</p>
+          <p className="text-sm opacity-90">{error}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">Catalogue M-Motors</h2>
-        <p className="text-slate-500">Trouvez le véhicule idéal pour votre prochain trajet parmi notre flotte sélectionnée.</p>
+    <div className="space-y-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Catalogue M-Motors</h2>
+          <p className="text-slate-500 mt-1">Découvrez nos solutions de Location Longue Durée et Vente.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 uppercase tracking-wider">
+            <Key size={14} /> LLD
+          </div>
+          <div className="flex items-center gap-2 text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100 uppercase tracking-wider">
+            <ShoppingBag size={14} /> Vente
+          </div>
+        </div>
       </div>
 
       {vehicles.length === 0 ? (
-        <div className="bg-white p-12 text-center rounded-2xl border border-dashed border-slate-300">
-          <Car className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900">Aucun véhicule disponible</h3>
-          <p className="text-slate-500">Revenez plus tard pour découvrir nos nouvelles offres.</p>
+        <div className="bg-white p-20 text-center rounded-3xl border-2 border-dashed border-slate-200 shadow-inner">
+          <Car className="w-16 h-16 text-slate-200 mx-auto mb-6" />
+          <h3 className="text-xl font-bold text-slate-900">Le parc est actuellement vide</h3>
+          <p className="text-slate-500 max-w-sm mx-auto mt-2">Nous préparons de nouveaux véhicules pour vous. Repassez nous voir très bientôt !</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {vehicles.map((vehicle, idx) => (
             <motion.div
               key={vehicle.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="group bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:border-blue-200 transition-all flex flex-col"
+              transition={{ delay: idx * 0.05, type: 'spring', stiffness: 100 }}
+              className="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col relative"
             >
-              {/* Image avec prix en évidence */}
-              <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
+              {/* Image avec prix dynamique */}
+              <div className="aspect-[4/3] relative overflow-hidden bg-slate-50">
                 <img 
-                  src={vehicle.image || `https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=400`} 
+                  src={vehicle.imagePath || `https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=400`} 
                   alt={`${vehicle.marque} ${vehicle.modele}`}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute top-4 right-4 bg-white px-3 py-1.5 rounded-xl text-blue-700 font-bold text-sm shadow-lg flex items-center gap-1.5">
-                  <Banknote size={14} />
-                  {vehicle.prixJournalier}€/j
+                
+                {/* Badge de catégorie sur l'image */}
+                <div className={`absolute top-4 left-4 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1.5 backdrop-blur-md border ${vehicle.categorie === 'LOCATION' ? 'bg-emerald-500/90 text-white border-emerald-400' : 'bg-blue-600/90 text-white border-blue-400'}`}>
+                  {vehicle.categorie === 'LOCATION' ? <Key size={12} /> : <ShoppingBag size={12} />}
+                  {vehicle.categorie === 'LOCATION' ? 'LLD' : 'Achat'}
+                </div>
+
+                <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-2xl text-slate-900 font-black text-base shadow-xl border border-white/20">
+                  {vehicle.prix.toLocaleString()}€
+                  {vehicle.categorie === 'LOCATION' && <span className="text-[10px] text-slate-400 font-bold ml-1">/mois</span>}
                 </div>
               </div>
               
-              <div className="p-5 flex-1 flex flex-col">
-                <div className="mb-4">
-                  <h3 className="font-bold text-slate-900 text-lg uppercase tracking-tight">
-                    {vehicle.marque} <span className="text-blue-600 font-extrabold">{vehicle.modele}</span>
+              <div className="p-6 flex-1 flex flex-col">
+                <div className="mb-6">
+                  <h3 className="font-extrabold text-slate-900 text-xl tracking-tight leading-tight uppercase">
+                    {vehicle.marque} <span className={vehicle.categorie === 'LOCATION' ? 'text-emerald-600' : 'text-blue-600'}>{vehicle.modele}</span>
                   </h3>
-                  <div className="flex flex-col gap-1 mt-1">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <Calendar size={14} />
-                      <span>Année : {vehicle.annee}</span>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                      <Calendar size={14} className="text-slate-300" />
+                      <span>{vehicle.annee}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <Gauge size={14} />
-                      <span>{vehicle.kilometrage?.toLocaleString() || '0'} km</span>
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                      <Gauge size={14} className="text-slate-300" />
+                      <span>{vehicle.kilometrage?.toLocaleString()} KM</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2 rounded-lg">
+                <div className="grid grid-cols-2 gap-3 mb-8">
+                  <div className="flex items-center gap-2 text-slate-700 bg-slate-50 border border-slate-100 p-2.5 rounded-2xl">
                     <Fuel size={16} className="text-slate-400" />
-                    <span className="text-xs font-medium">{vehicle.carburant || 'Hybride'}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Hybride</span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-600 bg-slate-50 p-2 rounded-lg">
+                  <div className="flex items-center gap-2 text-slate-700 bg-slate-50 border border-slate-100 p-2.5 rounded-2xl">
                     <Zap size={16} className="text-amber-500" />
-                    <span className="text-xs font-medium">BVA</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">BVA</span>
                   </div>
                 </div>
 
-                <button className="w-full mt-auto py-3 bg-slate-900 group-hover:bg-blue-600 text-white font-bold rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2">
+                <button className={`
+                  w-full mt-auto py-4 text-white font-black rounded-2xl uppercase tracking-[0.2em] text-[10px] transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2
+                  ${vehicle.categorie === 'LOCATION' ? 'bg-slate-900 hover:bg-emerald-600 shadow-emerald-100' : 'bg-slate-900 hover:bg-blue-600 shadow-blue-100'}
+                `}>
                   <Car size={18} />
-                  Réserver en ligne
+                  {vehicle.categorie === 'LOCATION' ? 'Louer' : 'Acheter'}
                 </button>
               </div>
             </motion.div>

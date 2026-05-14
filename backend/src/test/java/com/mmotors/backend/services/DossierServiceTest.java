@@ -50,10 +50,11 @@ class DossierServiceTest {
         user.setId(1L);
         user.setEmail("client@mmotors.com");
 
-        Vehicle vehicle = new Vehicle();
-        vehicle.setId(1L);
-        vehicle.setMarque("Tesla");
-        vehicle.setModele("Model 3");
+        Vehicle vehicle = Vehicle.builder()
+                .id(1L)
+                .marque("Tesla")
+                .modele("Model 3")
+                .build();
 
         Dossier dossierSaved = new Dossier();
         dossierSaved.setId(100L);

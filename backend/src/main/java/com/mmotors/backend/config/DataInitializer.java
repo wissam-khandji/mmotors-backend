@@ -8,6 +8,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Base64;
+
 /**
  * Initialisation des données au démarrage de l'application.
  */
@@ -46,32 +52,64 @@ public class DataInitializer implements CommandLineRunner {
         if (vehicleRepository.count() == 0) {
             System.out.println("Initialisation du catalogue de véhicules...");
             
-            Vehicle v1 = new Vehicle();
-            v1.setMarque("Tesla");
-            v1.setModele("Model 3");
-            v1.setPrix(35000);
-            v1.setKilometrage(0);
-            v1.setCategorie(VehicleCategory.VENTE);
-            v1.setStatut(VehicleStatus.DISPONIBLE);
+            Vehicle v1 = Vehicle.builder()
+                .marque("Tesla")
+                .modele("Model 3")
+                .prix(35000)
+                .kilometrage(0)
+                .annee(2023)
+                .categorie(VehicleCategory.VENTE)
+                .statut(VehicleStatus.DISPONIBLE)
+                .imagePath(encodeImageToBase64("tesla.jpg"))
+                .build();
             vehicleRepository.save(v1);
 
-            Vehicle v2 = new Vehicle();
-            v2.setMarque("BMW");
-            v2.setModele("i4");
-            v2.setPrix(450); // Prix de location par jour par exemple
-            v2.setKilometrage(5000);
-            v2.setCategorie(VehicleCategory.LOCATION);
-            v2.setStatut(VehicleStatus.DISPONIBLE);
+            Vehicle v2 = Vehicle.builder()
+                .marque("BMW")
+                .modele("i4")
+                .prix(450)
+                .kilometrage(5000)
+                .annee(2022)
+                .categorie(VehicleCategory.LOCATION)
+                .statut(VehicleStatus.DISPONIBLE)
+                .imagePath(encodeImageToBase64("bmw.jpg"))
+                .build();
             vehicleRepository.save(v2);
 
-            Vehicle v3 = new Vehicle();
-            v3.setMarque("Peugeot");
-            v3.setModele("e-208");
-            v3.setPrix(28000);
-            v3.setKilometrage(1200);
-            v3.setCategorie(VehicleCategory.VENTE);
-            v3.setStatut(VehicleStatus.RESERVE);
+            Vehicle v3 = Vehicle.builder()
+                .marque("Peugeot")
+                .modele("e-208")
+                .prix(28000)
+                .kilometrage(1200)
+                .annee(2021)
+                .categorie(VehicleCategory.VENTE)
+                .statut(VehicleStatus.RESERVE)
+                .imagePath(encodeImageToBase64("peugeot.jpg"))
+                .build();
             vehicleRepository.save(v3);
         }
+    }
+
+    /**
+     * Encode une image locale en chaîne Base64 pour le stockage en DB.
+     * Les images doivent être placées dans src/main/resources/static/images/
+     */
+    private String encodeImageToBase64(String imageName) {
+        try {
+            // Chemin vers les ressources statiques
+            Path path = Paths.get("src/main/resources/static/images/" + imageName);
+            
+            if (Files.exists(path)) {
+                byte[] imageBytes = Files.readAllBytes(path);
+                String base64 = Base64.getEncoder().encodeToString(imageBytes);
+                // Préfixe pour affichage direct dans la balise <img src="...">
+                return "data:image/jpeg;base64," + base64;
+            } else {
+                System.err.println("Image manquante : " + path.toAbsolutePath());
+            }
+        } catch (IOException e) {
+            System.err.println("Erreur lors de l'encodage de l'image " + imageName + " : " + e.getMessage());
+        }
+        return ""; // Retourne une chaîne vide si l'image n'est pas trouvée ou erreur
     }
 }

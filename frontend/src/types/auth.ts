@@ -27,13 +27,13 @@ export interface AuthResponse {
  * Interface pour les véhicules de la flotte
  */
 export interface Vehicle {
-  id: number;
-  marque: string;
-  modele: string;
-  annee: number;
-  prixJournalier: number;
-  kilometrage?: number;
-  type?: string;
-  carburant?: string;
-  image?: string;
+    id?: number;
+    marque: string;
+    modele: string;
+    annee: number;
+    kilometrage: number;
+    prix: number; // Sera le loyer mensuel ou le prix total
+    categorie: 'LOCATION' | 'VENTE';
+    imagePath?: string;
+    statut?: 'DISPONIBLE' | 'LOUE' | 'VENDU';
 }
