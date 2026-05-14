@@ -47,16 +47,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (credentials: LoginRequest) => {
     try {
       const response = await api.post<AuthResponse>('/auth/login', credentials);
-      const { token, id, email, roles } = response.data;
-      
-      // Objet utilisateur basé uniquement sur id, email et roles
-      const userObj: User = { id, email, roles };
+      const { token, user: userData } = response.data;
       
       // Stockage local pour persistance
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userObj));
+      localStorage.setItem('user', JSON.stringify(userData));
       
-      setUser(userObj);
+      setUser(userData);
       setIsAuthenticated(true);
     } catch (error) {
       throw error; // Relayé au composant Login pour affichage d'erreur

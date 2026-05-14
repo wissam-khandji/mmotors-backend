@@ -4,7 +4,7 @@
 export interface User {
   id: number;
   email: string;
-  roles: string[];
+  role: string;
 }
 
 /**
@@ -20,8 +20,20 @@ export interface LoginRequest {
  */
 export interface AuthResponse {
   token: string;
-  type: string;
+  user: User;
+}
+
+/**
+ * Interface pour les véhicules de la flotte
+ */
+export interface Vehicle {
   id: number;
-  email: string;
-  roles: string[];
+  marque: string;
+  modele: string;
+  annee: number;
+  prixJournalier: number;
+  kilometrage?: number;
+  type?: string;
+  carburant?: string;
+  image?: string;
 }
