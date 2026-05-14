@@ -35,6 +35,8 @@ interface VehicleFormInput {
   categorie: 'LOCATION' | 'VENTE';
   imagePath: string;
   statut: 'DISPONIBLE' | 'LOUE' | 'VENDU';
+  energie: string;
+  transmission: string;
 }
 
 /**
@@ -97,7 +99,9 @@ const AdminDashboard: React.FC = () => {
         kilometrage: vehicle.kilometrage,
         categorie: vehicle.categorie,
         imagePath: vehicle.imagePath || '',
-        statut: vehicle.statut || 'DISPONIBLE'
+        statut: vehicle.statut || 'DISPONIBLE',
+        energie: vehicle.energie || 'Essence',
+        transmission: vehicle.transmission || 'Manuelle'
       });
     } else {
       setEditingVehicle(null);
@@ -109,7 +113,9 @@ const AdminDashboard: React.FC = () => {
         kilometrage: 0,
         categorie: 'LOCATION',
         imagePath: '',
-        statut: 'DISPONIBLE'
+        statut: 'DISPONIBLE',
+        energie: 'Essence',
+        transmission: 'Manuelle'
       });
     }
     setIsModalOpen(true);
@@ -441,14 +447,32 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Statut opérationnel */}
-                <div className="space-y-2 pt-2">
-                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Statut du Stock</label>
-                   <select {...register('statut')} className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-bold bg-slate-50 appearance-none cursor-pointer">
-                      <option value="DISPONIBLE">🟢 Disponible - Prêt pour départ</option>
-                      <option value="LOUE">🟠 Loué - Actuellement sur route</option>
-                      <option value="VENDU">🔴 Vendu - Sortie de stock</option>
-                   </select>
+                {/* Statut opérationnel et caractéristiques */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Énergie</label>
+                    <select {...register('energie')} className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-bold bg-slate-50 appearance-none cursor-pointer">
+                      <option value="Essence">Essence</option>
+                      <option value="Diesel">Diesel</option>
+                      <option value="Électrique">Électrique</option>
+                      <option value="Hybride">Hybride</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Transmission</label>
+                    <select {...register('transmission')} className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-bold bg-slate-50 appearance-none cursor-pointer">
+                      <option value="Manuelle">Manuelle</option>
+                      <option value="Automatique">Automatique</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Statut du Stock</label>
+                    <select {...register('statut')} className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-bold bg-slate-50 appearance-none cursor-pointer">
+                        <option value="DISPONIBLE">🟢 Disponible</option>
+                        <option value="LOUE">🟠 Loué</option>
+                        <option value="VENDU">🔴 Vendu</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="pt-8 flex gap-4">

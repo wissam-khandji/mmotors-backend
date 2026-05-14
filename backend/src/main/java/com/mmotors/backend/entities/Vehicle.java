@@ -40,6 +40,10 @@ public class Vehicle {
 
     private int annee;
 
+    private String energie;
+
+    private String transmission;
+
     @Lob 
     @Column(columnDefinition = "LONGTEXT")
     private String imagePath;

@@ -231,11 +231,11 @@ const VehicleCatalog: React.FC = () => {
                   <div className="grid grid-cols-2 gap-3 mb-8">
                     <div className="flex items-center gap-2 text-slate-700 bg-slate-50 border border-slate-100 p-2.5 rounded-2xl">
                       <Fuel size={16} className="text-slate-400" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Hybride</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{vehicle.energie || 'Non renseignée'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-700 bg-slate-50 border border-slate-100 p-2.5 rounded-2xl">
                       <Zap size={16} className="text-amber-500" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">BVA</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{vehicle.transmission || 'Non renseignée'}</span>
                     </div>
                   </div>
 

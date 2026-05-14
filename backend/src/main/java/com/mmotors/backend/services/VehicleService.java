@@ -75,6 +75,8 @@ public class VehicleService {
         vehicle.setCategorie(details.getCategorie());
         vehicle.setStatut(details.getStatut());
         vehicle.setAnnee(details.getAnnee());
+        vehicle.setEnergie(details.getEnergie());
+        vehicle.setTransmission(details.getTransmission());
         vehicle.setImagePath(details.getImagePath());
         
         return vehicleRepository.save(vehicle);

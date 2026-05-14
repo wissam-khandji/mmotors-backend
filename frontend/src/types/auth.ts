@@ -36,4 +36,6 @@ export interface Vehicle {
     categorie: 'LOCATION' | 'VENTE';
     imagePath?: string;
     statut?: 'DISPONIBLE' | 'LOUE' | 'VENDU';
+    energie?: string;
+    transmission?: string;
 }

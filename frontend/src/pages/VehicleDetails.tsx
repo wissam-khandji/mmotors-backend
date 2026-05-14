@@ -144,7 +144,7 @@ const VehicleDetails: React.FC = () => {
                 <h1 className="text-7xl font-black text-slate-900 tracking-tighter uppercase leading-[0.85]">
                   {vehicle.marque} <span className="block text-blue-600">{vehicle.modele}</span>
                 </h1>
-                <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px]">Référence : MM-{vehicle.id ? vehicle.id.toString().slice(-4) : '0000'}</p>
+                <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px]">Référence : MM-{vehicle.id?.toString().slice(-4) ?? '----'}</p>
               </div>
               
               <div className="p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 flex items-center justify-between">
@@ -165,8 +165,8 @@ const VehicleDetails: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <DetailCard icon={<Calendar size={20} />} label="Mise en circulation" value={vehicle.annee.toString()} />
               <DetailCard icon={<Gauge size={20} />} label="Usage" value={`${vehicle.kilometrage.toLocaleString()} KM`} />
-              <DetailCard icon={<Fuel size={20} />} label="Énergie" value="Hybride Rechargeable" />
-              <DetailCard icon={<Zap size={20} />} label="Transmission" value="Automatique BVA8" />
+              <DetailCard icon={<Fuel size={20} />} label="Énergie" value={vehicle.energie || 'Non renseignée'} />
+              <DetailCard icon={<Zap size={20} />} label="Transmission" value={vehicle.transmission || 'Non renseignée'} />
             </div>
 
             {/* Actions Contextuelles */}
