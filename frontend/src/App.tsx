@@ -8,6 +8,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Home from './pages/Home';
+import VehicleDetails from './pages/VehicleDetails';
 
 /**
  * Route Protégée : Redirige vers /login si l'utilisateur n'est pas connecté
@@ -68,6 +69,14 @@ export default function App() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/vehicle/:id" 
+            element={
+              <ProtectedRoute>
+                <VehicleDetails />
+              </ProtectedRoute>
+            } 
+          />
           {/* Fallback : Redirige toute route inconnue vers l'accueil */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -75,5 +84,4 @@ export default function App() {
     </AuthProvider>
   );
 }
-
 
