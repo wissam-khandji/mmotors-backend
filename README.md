@@ -1,93 +1,51 @@
-# M-Motors — Backend API
-### Système de Gestion Automobile
+#  M-Motors - Plateforme de Gestion de Flotte Automobile
 
----
+M-Motors est une application Fullstack moderne conçue pour un mandataire automobile. Elle permet de gérer un catalogue de véhicules, de configurer des options de personnalisation et de traiter des demandes de Location Longue Durée (LLD) ou de Vente Directe.
 
-##  Présentation du Projet
+##  Fonctionnalités Clés
 
-**M-Motors** : Backend du projet M-Motors pour le bloc 3.
+###  Espace Client
+- **Inscription & Connexion** : Système sécurisé avec hachage BCrypt et tokens JWT.
+- **Catalogue Dynamique** : Visualisation des véhicules avec filtres par catégorie (Vente/Location).
+- **Configuration d'Options** : Choix d'options (Peinture, Entretien, Assistance) avec calcul du prix en temps réel.
+- **Suivi des Demandes** : Interface dédiée pour suivre l'état d'avancement des dossiers (En attente, Validé, Refusé).
 
-- Gestion du parc automobile (CRUD complet, filtrage par catégorie)
-- Système d'authentification sécurisé (JWT — JSON Web Token)
-- Gestion des dossiers clients (Location/Achat) avec suivi de documents
-- Architecture multicouche (Controller, Service, Repository, Entity)
-
----
+###  Interface Administration
+- **Gestion du Parc (CRUD)** : Ajout, modification et suppression de véhicules (gestion des images en Base64).
+- **Gestion des Dossiers** : Système de validation/refus des demandes clients.
+- **Automatisation** : Mise à jour automatique du statut du véhicule (ex: passe en "Vendu" ou "Loué" dès validation du dossier).
+- **KPIs** : Indicateurs visuels sur l'état de la flotte et le taux d'utilisation.
 
 ##  Stack Technique
 
-| Technologie | Détail |
-|---|---|
-| **Langage** | Java 17 |
-| **Framework** | Spring Boot 3.5.14 |
-| **Sécurité** | Spring Security & JWT |
-| **Base de données** | H2 (en mémoire, pour test rapide) |
-| **Documentation** | Swagger / OpenAPI 3 |
-| **Outils** | Maven, Lombok |
+- **Backend** : Spring Boot 3.3 (Java 17), Spring Security, JWT, Hibernate/JPA.
+- **Frontend** : React 18, TypeScript, Tailwind CSS 4, Vite, Motion.
+- **Base de données** : H2 (Base de données relationnelle en mémoire pour la démo).
+- **Communication** : API REST avec Axios.
 
----
+##  Installation et Lancement
 
-##  Installation et Lancement Rapide
+### Prérequis
+- Java 17+
+- Node.js 18+
 
-**1. Cloner le repository :**
-```bash
-git clone https://github.com/wissam-khandji/mmotors-backend.git
-```
+### Lancement du Backend
+1. Accéder au dossier : `cd backend`
+2. Lancer l'application : `./mvnw spring-boot:run`
+3. L'API sera disponible sur `http://localhost:8080`
 
-**2. Lancer l'application** à la racine du projet :
-```bash
-./mvnw spring-boot:run
-```
+### Lancement du Frontend
+1. Accéder au dossier : `cd frontend`
+2. Installer les dépendances : `npm install`
+3. Lancer le projet : `npm run dev`
+4. L'application sera accessible sur `http://localhost:5173`
 
-**3. Vérification :**
-L'API sera accessible sur `http://localhost:8080`
-
----
-
-##  Identifiants de Test (Auto-générés)
-
-Au démarrage, l'application initialise automatiquement deux comptes pour faciliter l'évaluation :
+##  Identifiants de Test
 
 | Rôle | Email | Mot de passe |
-|---|---|---|
-| Administrateur | `admin@mmotors.com` | `admin123` |
-| Client | `jean.dupont@test.com` | `client123` |
-
->  Les mots de passe sont cryptés en base de données via **BCrypt**.
+| :--- | :--- | :--- |
+| **Admin** | `admin@mmotors.com` | `admin123` |
+| **Client** | `jean.dupont@test.com` | `client123` |
 
 ---
-
-## 📖 Documentation Interactive (Swagger)
-
-Une interface Swagger UI est disponible pour tester les endpoints sans outils externes :
-
- **[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)**
-
-**Procédure de test dans Swagger :**
-
-1. Utilisez l'endpoint `POST /api/auth/login` avec les identifiants ci-dessus
-2. Copiez le token reçu dans la réponse
-3. Cliquez sur le bouton **"Authorize"**  en haut à droite et collez le token
-4. Vous pouvez maintenant tester les routes protégées (ex : création de véhicule)
-
----
-
-## 📊 Accès à la Base de Données
-
-Visualisez les tables en temps réel via la console H2 :
-
-| Paramètre | Valeur |
-|---|---|
-| **URL** | `http://localhost:8080/h2-console` |
-| **JDBC URL** | `jdbc:h2:mem:mmotorsdb` |
-| **User** | `sa` |
-| **Password** | *(laisser vide)* |
-
----
-
-##  Configuration CORS
-
-L'API est pré-configurée pour accepter les requêtes provenant d'un client React (Vite) sur :
-
-- `http://localhost:5173`
-- `http://localhost:3000`
+*Projet réalisé dans le cadre de l'examen de validation du Bloc 3.*
