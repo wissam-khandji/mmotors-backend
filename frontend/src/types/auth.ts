@@ -62,6 +62,6 @@ export interface Dossier {
   vehicle?: Vehicle;
   optionIds: number[];
   documents: string[]; // Stockage Base64 pour démo
-  statut: 'EN_COURS' | 'VALIDE' | 'REFUSE';
+  statut: 'EN_COURS' | 'VALIDE' | 'REFUSE' | 'EN_ATTENTE';
   createdAt?: string;
 }

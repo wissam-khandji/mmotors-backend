@@ -498,7 +498,7 @@ const AdminDashboard: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
-                            {(d.statut === 'EN_COURS' || d.statut === 'EN_ATTENTE') && d.id && (
+                            {((d.statut as string) === 'EN_COURS' || d.statut === 'EN_ATTENTE') && d.id && (
                               <>
                                 <button 
                                   onClick={() => handleUpdateDossierStatus(d.id!, 'VALIDE')}

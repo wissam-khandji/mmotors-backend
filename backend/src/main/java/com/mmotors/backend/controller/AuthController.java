@@ -5,12 +5,14 @@ import com.mmotors.backend.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * Contrôleur gérant l'authentification.
  */
 @RestController
-@RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class AuthController {
 
     private final UserService userService;
@@ -19,15 +21,20 @@ public class AuthController {
     /**
      * Enregistre un nouvel utilisateur.
      */
-    @PostMapping("/register")
-    public User register(@RequestBody User user) {
+    @PostMapping("/api/auth/register")
+    public User register(@RequestBody Map<String, String> payload) {
+        User user = new User();
+        user.setNom(payload.get("nom"));
+        user.setPrenom(payload.get("prenom"));
+        user.setEmail(payload.get("email"));
+        user.setMotDePasse(payload.get("motDePasse"));
         return userService.register(user);
     }
 
     /**
      * Connecte un utilisateur et retourne un token JWT.
      */
-    @PostMapping("/login")
+    @PostMapping("/api/auth/login")
     public AuthResponse login(@RequestBody LoginRequest loginRequest) {
         User user = userService.login(loginRequest.getEmail(), loginRequest.getMotDePasse());
         // Utilisation de user.getRole().toString() ou name()

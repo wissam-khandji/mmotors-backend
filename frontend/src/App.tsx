@@ -7,6 +7,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Home from './pages/Home';
 import VehicleDetails from './pages/VehicleDetails';
 import MyRequests from './pages/MyRequests';
@@ -59,6 +60,14 @@ export default function App() {
             element={
               <PublicRoute>
                 <Login />
+              </PublicRoute>
+            } 
+          />
+          <Route 
+            path="/register" 
+            element={
+              <PublicRoute>
+                <Register />
               </PublicRoute>
             } 
           />

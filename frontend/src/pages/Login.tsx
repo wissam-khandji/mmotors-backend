@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { LoginRequest } from '../types/auth';
 import { Car, Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
@@ -129,8 +129,8 @@ const Login: React.FC = () => {
         </div>
         
         <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
-          <p className="text-sm text-slate-600">
-            Besoin d'un compte ? <a href="#" className="text-blue-600 font-medium hover:underline">Contactez l'administrateur</a>
+          <p className="text-sm text-slate-600 font-medium">
+            Besoin d'un compte ? <Link to="/register" className="text-blue-600 font-bold hover:underline">Inscrivez-vous</Link>
           </p>
         </div>
       </motion.div>
