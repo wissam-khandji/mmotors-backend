@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Car, User } from 'lucide-react';
+import { LogOut, Car, User, FileText } from 'lucide-react';
 
 /**
  * Composant de navigation principal pour M-Motors
@@ -20,6 +20,19 @@ const Navbar: React.FC = () => {
             </div>
             <span className="text-xl font-bold text-slate-900 tracking-tight">M-Motors</span>
           </Link>
+
+          {/* Navigation Links */}
+          <div className="flex-1 flex justify-center">
+            {user && (user.role === 'CLIENT' || user.role === 'USER') && (
+              <Link 
+                to="/mes-dossiers"
+                className="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
+              >
+                <FileText size={16} className="text-blue-500" />
+                Mes Demandes
+              </Link>
+            )}
+          </div>
 
           {/* Section Droite : Profil & Logout */}
           <div className="flex items-center gap-4 sm:gap-6">

@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -18,7 +19,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 
 /**
- * Configuration avancée de la sécurité Spring Security 3.
+ * Configuration avancée de la sécurité Spring Security.
  */
 @Configuration
 @EnableWebSecurity
@@ -35,26 +36,24 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
-                // --- Documentation Swagger  ---
-                .requestMatchers("/swagger-ui/**").permitAll()
-                .requestMatchers("/v3/api-docs/**").permitAll()
-                .requestMatchers("/swagger-ui.html").permitAll()
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 
                 .requestMatchers(HttpMethod.GET, "/api/vehicles/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/vehicles/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/vehicles/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/vehicles/*/switch").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/vehicles/**").hasRole("ADMIN")
+                
                 .requestMatchers("/api/users/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/dossiers").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/dossiers/*/statut").hasRole("ADMIN")
+                
                 .requestMatchers(HttpMethod.GET, "/api/options/**").hasAnyRole("CLIENT", "ADMIN")
                 .requestMatchers("/api/dossiers/**").hasAnyRole("CLIENT", "ADMIN")
                 .anyRequest().authenticated()
             )
             .headers(headers -> headers.frameOptions(frame -> frame.disable()))
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .addFilterBefore(jwtAuthFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -78,6 +77,6 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-    return config.getAuthenticationManager();
-}
+        return config.getAuthenticationManager();
+    }
 }

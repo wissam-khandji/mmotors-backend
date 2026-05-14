@@ -94,10 +94,21 @@ const VehicleDetails: React.FC = () => {
 
   const totalPrice = useMemo(() => {
     if (!vehicle) return 0;
-    const basePrice = Number(vehicle.prix) || 0;
-    const optionsTotal = options
-      .filter(o => selectedOptionIds.includes(o.id))
-      .reduce((sum, o) => sum + (Number(o.prix) || 0), 0);
+    
+    const safeNumber = (val: any) => {
+      if (val === null || val === undefined) return 0;
+      if (typeof val === 'string') {
+        // Gère les prix formattés type "45,00"
+        const cleaned = val.replace(/[^\d.,]/g, '').replace(',', '.');
+        return parseFloat(cleaned) || 0;
+      }
+      return Number(val) || 0;
+    };
+
+    const basePrice = safeNumber(vehicle.prix);
+    const selectedOptions = options.filter(o => selectedOptionIds.includes(o.id));
+    const optionsTotal = selectedOptions.reduce((acc, opt) => acc + safeNumber(opt.prix), 0);
+    
     return basePrice + optionsTotal;
   }, [vehicle, options, selectedOptionIds]);
 
@@ -282,7 +293,7 @@ const VehicleDetails: React.FC = () => {
             </div>
 
             {/* Options et Personnalisation */}
-            {!existingDossier && (
+            {!existingDossier && vehicle.categorie === 'LOCATION' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
@@ -313,7 +324,7 @@ const VehicleDetails: React.FC = () => {
                           <p className="text-[10px] text-slate-400 font-medium">{option.description || 'Option confort Premium'}</p>
                         </div>
                       </div>
-                      <p className="text-xs font-black text-blue-600">+{option.prix}€</p>
+                      <p className="text-xs font-black text-blue-600">+{(option.prix || 0).toLocaleString()}€{vehicle.categorie === 'LOCATION' ? '/mois' : ''}</p>
                     </button>
                   ))}
                 </div>

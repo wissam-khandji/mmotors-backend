@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import VehicleDetails from './pages/VehicleDetails';
+import MyRequests from './pages/MyRequests';
 
 /**
  * Route Protégée : Redirige vers /login si l'utilisateur n'est pas connecté
@@ -74,6 +75,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <VehicleDetails />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/mes-dossiers" 
+            element={
+              <ProtectedRoute>
+                <MyRequests />
               </ProtectedRoute>
             } 
           />

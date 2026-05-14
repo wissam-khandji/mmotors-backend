@@ -22,7 +22,9 @@ import {
   FileText,
   Check,
   Eye,
-  ExternalLink
+  ExternalLink,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useForm } from 'react-hook-form';
@@ -54,6 +56,7 @@ const AdminDashboard: React.FC = () => {
   const [options, setOptions] = useState<VehicleOption[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingDossiers, setLoadingDossiers] = useState<boolean>(false);
+  const [updatingDossierId, setUpdatingDossierId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -116,12 +119,15 @@ const AdminDashboard: React.FC = () => {
 
   const handleUpdateDossierStatus = async (id: number, statut: 'VALIDE' | 'REFUSE') => {
     try {
+      setUpdatingDossierId(id);
       await api.patch(`/dossiers/${id}/statut?statut=${statut}`);
       // On rafraîchit les dossiers et les véhicules (car statut change)
       await Promise.all([fetchDossiersData(), fetchVehicles()]);
     } catch (err) {
       console.error('Erreur update statut dossier:', err);
       alert('Erreur lors de la mise à jour du dossier.');
+    } finally {
+      setUpdatingDossierId(null);
     }
   };
 
@@ -436,7 +442,7 @@ const AdminDashboard: React.FC = () => {
                     <th className="px-6 py-5 font-black">Type</th>
                     <th className="px-6 py-5 font-black text-center">Détails & Docs</th>
                     <th className="px-6 py-5 font-black text-center">Statut</th>
-                    <th className="px-6 py-5 font-black text-right">Décision</th>
+                    <th className="px-6 py-5 font-black text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -491,22 +497,24 @@ const AdminDashboard: React.FC = () => {
                            </div>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {d.statut === 'EN_COURS' && (
+                          <div className="flex justify-end gap-2">
+                            {(d.statut === 'EN_COURS' || d.statut === 'EN_ATTENTE') && d.id && (
                               <>
                                 <button 
                                   onClick={() => handleUpdateDossierStatus(d.id!, 'VALIDE')}
-                                  className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
-                                  title="Valider la demande"
+                                  disabled={updatingDossierId === d.id}
+                                  className="p-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center gap-2 font-black text-[9px] uppercase tracking-widest disabled:opacity-50"
                                 >
-                                   <Check size={16} />
+                                   {updatingDossierId === d.id ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                                   Accepter
                                 </button>
                                 <button 
                                   onClick={() => handleUpdateDossierStatus(d.id!, 'REFUSE')}
-                                  className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm"
-                                  title="Refuser la demande"
+                                  disabled={updatingDossierId === d.id}
+                                  className="p-2.5 bg-rose-600 text-white rounded-xl hover:bg-rose-700 transition-all shadow-lg shadow-rose-100 flex items-center gap-2 font-black text-[9px] uppercase tracking-widest disabled:opacity-50"
                                 >
-                                   <X size={16} />
+                                   {updatingDossierId === d.id ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                                   Refuser
                                 </button>
                               </>
                             )}
@@ -743,24 +751,29 @@ const DossierStatusBadge = ({ status }: { status?: string }) => {
   switch (status) {
     case 'VALIDE':
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase tracking-widest">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-emerald-600 text-white uppercase tracking-widest shadow-sm">
           <CheckCircle2 size={12} /> Validé
         </span>
       );
     case 'EN_COURS':
+    case 'EN_ATTENTE':
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-widest">
-          <Clock size={12} /> À traiter
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-amber-400 text-black uppercase tracking-widest shadow-sm">
+          <Clock size={12} /> En attente
         </span>
       );
     case 'REFUSE':
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-600 border border-rose-100 uppercase tracking-widest">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-rose-600 text-white uppercase tracking-widest shadow-sm">
           <Ban size={12} /> Refusé
         </span>
       );
     default:
-      return null;
+      return status ? (
+        <span className="text-[10px] font-bold text-slate-400 uppercase italic">
+          [{status}]
+        </span>
+      ) : null;
   }
 };
 

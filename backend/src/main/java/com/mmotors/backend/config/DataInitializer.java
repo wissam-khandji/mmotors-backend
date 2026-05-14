@@ -3,6 +3,7 @@ package com.mmotors.backend.config;
 import com.mmotors.backend.entities.*;
 import com.mmotors.backend.repositories.UserRepository;
 import com.mmotors.backend.repositories.VehicleRepository;
+import com.mmotors.backend.repositories.OptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -23,7 +24,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
-    private final com.mmotors.backend.repositories.OptionRepository optionRepository;
+    private final OptionRepository optionRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
@@ -96,14 +97,15 @@ public class DataInitializer implements CommandLineRunner {
             vehicleRepository.save(v3);
         }
 
-        // 3. Initialisation des Options
+        // 3. Initialisation des Options avec prix
         if (optionRepository.count() == 0) {
-            System.out.println("Initialisation des options par défaut...");
+            System.out.println("Initialisation des options avec prix bidons...");
             
-            optionRepository.save(new Option(null, "Assurance Vol", 45.0, "SERVICE"));
-            optionRepository.save(new Option(null, "Assistance 24/7", 15.0, "SERVICE"));
-            optionRepository.save(new Option(null, "Entretien Premium", 80.0, "SERVICE"));
-            optionRepository.save(new Option(null, "Pack Connectivité", 10.0, "EQUIPEMENT"));
+            optionRepository.save(new Option(null, "Assurance Vol", 20.0, "SERVICE"));
+            optionRepository.save(new Option(null, "Assistance 24/7", 30.0, "SERVICE"));
+            optionRepository.save(new Option(null, "Entretien Premium", 20.0, "SERVICE"));
+            optionRepository.save(new Option(null, "Pack Connectivité", 30.0, "EQUIPEMENT"));
+            optionRepository.save(new Option(null, "Extension Garantie 2 ans", 50.0, "SERVICE"));
         }
     }
 
@@ -129,4 +131,6 @@ public class DataInitializer implements CommandLineRunner {
         }
         return ""; // Retourne une chaîne vide si l'image n'est pas trouvée ou erreur
     }
+    
 }
+

@@ -5,10 +5,12 @@ import com.mmotors.backend.entities.Dossier;
 import com.mmotors.backend.entities.DossierStatut;
 import com.mmotors.backend.entities.DossierType;
 import com.mmotors.backend.services.DossierService;
+import com.mmotors.backend.services.UserService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 /**
@@ -20,7 +22,7 @@ import java.util.List;
 public class DossierController {
 
     private final DossierService dossierService;
-    private final com.mmotors.backend.services.UserService userService;
+    private final UserService userService;
 
     /**
      * Création d'un dossier d'achat ou location.
@@ -45,7 +47,7 @@ public class DossierController {
     public List<Dossier> getDossiers(
             @RequestParam(required = false) Long userId, 
             @RequestParam(required = false) Long vehicleId,
-            java.security.Principal principal) {
+            Principal principal) {
         
         // Sécurité : Un client ne peut voir que SES propres dossiers
         if (principal != null) {
@@ -80,10 +82,12 @@ public class DossierController {
 
     /**
      * Permet de modifier le statut d'un dossier (Admin).
+     * Prend un String statut en entrée pour plus de flexibilité.
      */
     @PatchMapping("/{id}/statut")
-    public Dossier modifierStatut(@PathVariable Long id, @RequestParam DossierStatut statut) {
-        return dossierService.modifierStatut(id, statut);
+    public Dossier modifierStatut(@PathVariable Long id, @RequestParam String statut) {
+        DossierStatut dossierStatut = DossierStatut.valueOf(statut.toUpperCase());
+        return dossierService.modifierStatut(id, dossierStatut);
     }
 
     @Data
