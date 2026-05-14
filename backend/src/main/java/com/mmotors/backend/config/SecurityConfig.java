@@ -41,16 +41,16 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 
                 .requestMatchers(HttpMethod.GET, "/api/vehicles/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/vehicles/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/vehicles/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/vehicles/*/switch").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/vehicles/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/vehicles/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/vehicles/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/vehicles/*/switch").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/vehicles/**").hasAuthority("ADMIN")
                 
-                .requestMatchers("/api/users/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/dossiers/*/statut").hasRole("ADMIN")
+                .requestMatchers("/api/users/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/dossiers/*/statut").hasAuthority("ADMIN")
                 
-                .requestMatchers(HttpMethod.GET, "/api/options/**").hasAnyRole("CLIENT", "ADMIN")
-                .requestMatchers("/api/dossiers/**").hasAnyRole("CLIENT", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/options/**").hasAnyAuthority("CLIENT", "ADMIN")
+                .requestMatchers("/api/dossiers/**").hasAnyAuthority("CLIENT", "ADMIN")
                 .anyRequest().authenticated()
             )
             .headers(headers -> headers.frameOptions(frame -> frame.disable()))
@@ -59,18 +59,22 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(Arrays.asList("*")); 
-    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(Arrays.asList("*"));
-    configuration.setExposedHeaders(Arrays.asList("x-auth-token", "authorization"));
-    configuration.setAllowCredentials(true);
+  @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // On met l'URL exacte de ton front Vercel et de ton localhost
+        configuration.setAllowedOrigins(Arrays.asList(
+            "https://mmotors-backend.vercel.app", // TON LIEN VERCEL ICI
+            "http://localhost:5173"
+        )); 
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "x-auth-token"));
+        configuration.setAllowCredentials(true);
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-    return source;
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
 }
 
     @Bean
