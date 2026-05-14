@@ -39,3 +39,29 @@ export interface Vehicle {
     energie?: string;
     transmission?: string;
 }
+
+/**
+ * Interface pour les options de personnalisation
+ */
+export interface VehicleOption {
+  id: number;
+  nom: string;
+  prix: number;
+  description?: string;
+  type?: 'SERVICE' | 'EQUIPEMENT';
+}
+
+/**
+ * Interface pour les dossiers de demande (location ou achat)
+ */
+export interface Dossier {
+  id?: number;
+  userId: number;
+  vehicleId: number;
+  user?: User;
+  vehicle?: Vehicle;
+  optionIds: number[];
+  documents: string[]; // Stockage Base64 pour démo
+  statut: 'EN_COURS' | 'VALIDE' | 'REFUSE';
+  createdAt?: string;
+}

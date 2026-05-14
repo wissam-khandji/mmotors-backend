@@ -21,8 +21,9 @@ public class Document {
     @Column(nullable = false)
     private String nomFichier;
 
-    @Column(nullable = false)
-    private String cheminFichier;
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String content;
 
     /**
      * Relation ManyToOne : Plusieurs documents peuvent appartenir à un seul dossier.

@@ -21,5 +21,7 @@ public class Option {
     @Column(nullable = false)
     private String nom;
 
-    private double prix;
+    private double prixMensuel;
+
+    private String typeOption;
 }

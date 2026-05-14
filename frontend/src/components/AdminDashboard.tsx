@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
-import type { Vehicle } from '../types/auth';
+import type { Vehicle, Dossier, User, VehicleOption } from '../types/auth';
 import { 
   PlusCircle, 
   BarChart3, 
@@ -18,7 +18,11 @@ import {
   Image as ImageIcon,
   CheckCircle2,
   Clock,
-  Ban
+  Ban,
+  FileText,
+  Check,
+  Eye,
+  ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useForm } from 'react-hook-form';
@@ -43,8 +47,13 @@ interface VehicleFormInput {
  * Composant Dashboard pour les administrateurs avec tableau des véhicules
  */
 const AdminDashboard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'PARC' | 'DOSSIERS'>('PARC');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [dossiers, setDossiers] = useState<Dossier[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [options, setOptions] = useState<VehicleOption[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingDossiers, setLoadingDossiers] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -84,9 +93,53 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const fetchDossiersData = async () => {
+    try {
+      setLoadingDossiers(true);
+      const [dSource, oSource] = await Promise.all([
+        api.get<Dossier[]>('/dossiers'),
+        api.get<VehicleOption[]>('/options')
+      ]);
+      setDossiers(dSource.data);
+      setOptions(oSource.data);
+    } catch (err) {
+      console.error('Erreur chargement dossiers:', err);
+    } finally {
+      setLoadingDossiers(false);
+    }
+  };
+
   useEffect(() => {
     fetchVehicles();
+    fetchDossiersData();
   }, []);
+
+  const handleUpdateDossierStatus = async (id: number, statut: 'VALIDE' | 'REFUSE') => {
+    try {
+      await api.patch(`/dossiers/${id}/statut?statut=${statut}`);
+      // On rafraîchit les dossiers et les véhicules (car statut change)
+      await Promise.all([fetchDossiersData(), fetchVehicles()]);
+    } catch (err) {
+      console.error('Erreur update statut dossier:', err);
+      alert('Erreur lors de la mise à jour du dossier.');
+    }
+  };
+
+  const viewDossierDetails = (dossier: Dossier) => {
+    const chosenOptions = options.filter(o => dossier.optionIds.includes(o.id));
+    const optionsText = chosenOptions.length > 0 
+      ? `Options choisies: ${chosenOptions.map(o => o.nom).join(', ')}`
+      : 'Aucune option choisie';
+    
+    alert(optionsText);
+  };
+
+  const openDocument = (base64: string) => {
+    const win = window.open();
+    if (win) {
+      win.document.write(`<iframe src="${base64}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+    }
+  };
 
   const handleOpenModal = (vehicle?: Vehicle) => {
     if (vehicle) {
@@ -176,162 +229,305 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* En-tête */}
-      <div className="flex justify-between items-end flex-wrap gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Gestion du Parc Automobile</h2>
-          <p className="text-slate-500">Contrôlez l'inventaire, les statuts et les tarifs en temps réel</p>
-        </div>
-        <button 
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-100 transition-all active:scale-95 text-sm"
-        >
-          <PlusCircle size={20} />
-          Ajouter un véhicule
-        </button>
-      </div>
-
-      {/* Cartes KPI */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <AdminStatCard 
-          icon={<CarFront className="text-blue-600" />} 
-          label="Véhicules Actifs" 
-          value={totalVehicles.toString()} 
-          trend="Inventaire" 
-        />
-        <AdminStatCard 
-          icon={<BarChart3 className="text-emerald-600" />} 
-          label="Taux d'utilisation" 
-          value={`${usageRate}%`} 
-          description={`${rentedVehicles} en location`}
-        />
-        <AdminStatCard 
-          icon={<Users className="text-amber-600" />} 
-          label="Conducteurs" 
-          value="24" 
-          description="Mode Simulé"
-        />
-      </div>
-
-      {/* Liste des véhicules */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm"
-      >
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
-          <h3 className="font-extrabold text-slate-900 uppercase tracking-widest text-xs">Répertoire Flotte</h3>
-          <div className="flex gap-4">
-            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest"> Filtres rapides :</div>
-            <div className="flex gap-2">
-              <span className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100 uppercase tracking-tighter">
-                 Location
-              </span>
-              <span className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md border border-blue-100 uppercase tracking-tighter">
-                 Vente
-              </span>
-            </div>
+      <div className="flex justify-between items-end flex-wrap gap-6">
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Dashboard Admin</h2>
+            <p className="text-slate-500 font-medium">Gestion globale de la plateforme M-Motors</p>
+          </div>
+          
+          <div className="flex p-1 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner w-fit">
+            <button
+              onClick={() => setActiveTab('PARC')}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'PARC' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              <CarFront size={16} />
+              Gestion du Parc
+            </button>
+            <button
+              onClick={() => setActiveTab('DOSSIERS')}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'DOSSIERS' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              <FileText size={16} />
+              Gestion des Dossiers
+            </button>
           </div>
         </div>
-        
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="p-20 flex flex-col items-center justify-center gap-4">
-              <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-              <p className="text-slate-400 font-medium text-sm">Synchronisation des données...</p>
+
+        {activeTab === 'PARC' && (
+          <button 
+            onClick={() => handleOpenModal()}
+            className="flex items-center gap-2 px-6 py-4 bg-slate-900 hover:bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-100 transition-all active:scale-95 text-[10px] uppercase tracking-widest"
+          >
+            <PlusCircle size={20} />
+            Ajouter un véhicule
+          </button>
+        )}
+      </div>
+
+      {activeTab === 'PARC' ? (
+        <>
+          {/* Cartes KPI */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <AdminStatCard 
+              icon={<CarFront className="text-blue-600" />} 
+              label="Véhicules Actifs" 
+              value={totalVehicles.toString()} 
+              trend="Inventaire" 
+            />
+            <AdminStatCard 
+              icon={<BarChart3 className="text-emerald-600" />} 
+              label="Taux d'utilisation" 
+              value={`${usageRate}%`} 
+              description={`${rentedVehicles} en location`}
+            />
+            <AdminStatCard 
+              icon={<Users className="text-amber-600" />} 
+              label="Conducteurs" 
+              value="24" 
+              description="Mode Simulé"
+            />
+          </div>
+
+          {/* Liste des véhicules */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm"
+          >
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+              <h3 className="font-extrabold text-slate-900 uppercase tracking-widest text-xs">Répertoire Flotte</h3>
+              <div className="flex gap-4">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest"> Filtres rapides :</div>
+                <div className="flex gap-2">
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100 uppercase tracking-tighter">
+                    Location
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md border border-blue-100 uppercase tracking-tighter">
+                    Vente
+                  </span>
+                </div>
+              </div>
             </div>
-          ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/50 text-slate-400 text-[10px] uppercase tracking-[0.2em]">
-                  <th className="px-6 py-5 font-black">Aperçu</th>
-                  <th className="px-6 py-5 font-black">Véhicule</th>
-                  <th className="px-6 py-5 font-black">Catégorie</th>
-                  <th className="px-6 py-5 font-black text-center">Statut</th>
-                  <th className="px-6 py-5 font-black">Prix</th>
-                  <th className="px-6 py-5 font-black text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {vehicles.map((v, idx) => (
-                  <motion.tr 
-                    key={v.id} 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.03 }}
-                    className="group hover:bg-slate-50/80 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="w-14 h-9 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shadow-inner">
-                        {v.imagePath ? (
-                          <img src={v.imagePath} alt={v.marque} className="w-full h-full object-cover" />
-                        ) : (
-                          <CarFront size={16} className="text-slate-300" />
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{v.marque} {v.modele}</p>
-                        <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                          {v.annee ? v.annee : 'N/A'} • {v.kilometrage?.toLocaleString() || '0'} KM
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {v.categorie === 'LOCATION' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase">
-                          <Key size={10} /> Location
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-100 uppercase">
-                          <ShoppingBag size={10} /> Vente
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-center">
-                        <StatusBadge status={v.statut} />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-black text-slate-900">
-                        {v.prix.toLocaleString()}€
-                        {v.categorie === 'LOCATION' && <span className="text-[10px] text-slate-400 font-bold ml-1 uppercase">/mois</span>}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => handleOpenModal(v)}
-                          className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 rounded-xl transition-all"
-                        >
-                          <Edit3 size={16} />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteVehicle(v.id)}
-                          className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 rounded-xl transition-all"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-                {vehicles.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-20 text-center">
-                      <div className="flex flex-col items-center gap-2 grayscale opacity-40">
-                         <CarFront size={40} className="text-slate-300" />
-                         <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Le parc est vide</p>
-                      </div>
-                    </td>
+            
+            <div className="overflow-x-auto">
+              {loading ? (
+                <div className="p-20 flex flex-col items-center justify-center gap-4">
+                  <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+                  <p className="text-slate-400 font-medium text-sm">Synchronisation des données...</p>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50 text-slate-400 text-[10px] uppercase tracking-[0.2em]">
+                      <th className="px-6 py-5 font-black">Aperçu</th>
+                      <th className="px-6 py-5 font-black">Véhicule</th>
+                      <th className="px-6 py-5 font-black">Catégorie</th>
+                      <th className="px-6 py-5 font-black text-center">Statut</th>
+                      <th className="px-6 py-5 font-black">Prix</th>
+                      <th className="px-6 py-5 font-black text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {vehicles.map((v, idx) => (
+                      <motion.tr 
+                        key={v.id} 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.03 }}
+                        className="group hover:bg-slate-50/80 transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="w-14 h-9 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shadow-inner">
+                            {v.imagePath ? (
+                              <img src={v.imagePath} alt={v.marque} className="w-full h-full object-cover" />
+                            ) : (
+                              <CarFront size={16} className="text-slate-300" />
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{v.marque} {v.modele}</p>
+                            <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                              {v.annee ? v.annee : 'N/A'} • {v.kilometrage?.toLocaleString() || '0'} KM
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {v.categorie === 'LOCATION' ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase">
+                              <Key size={10} /> Location
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-100 uppercase">
+                              <ShoppingBag size={10} /> Vente
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-center">
+                            <StatusBadge status={v.statut} />
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="font-black text-slate-900">
+                            {v.prix.toLocaleString()}€
+                            {v.categorie === 'LOCATION' && <span className="text-[10px] text-slate-400 font-bold ml-1 uppercase">/mois</span>}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={() => handleOpenModal(v)}
+                              className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 rounded-xl transition-all"
+                            >
+                              <Edit3 size={16} />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteVehicle(v.id)}
+                              className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 rounded-xl transition-all"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                    {vehicles.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-20 text-center">
+                          <div className="flex flex-col items-center gap-2 grayscale opacity-40">
+                            <CarFront size={40} className="text-slate-300" />
+                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Le parc est vide</p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </motion.div>
+        </>
+      ) : (
+        /* Liste des dossiers */
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm"
+        >
+          <div className="p-6 border-b border-slate-100 bg-slate-50/30">
+            <h3 className="font-extrabold text-slate-900 uppercase tracking-widest text-xs">Suivi des demandes clients</h3>
+          </div>
+          
+          <div className="overflow-x-auto">
+            {loadingDossiers ? (
+              <div className="p-20 flex flex-col items-center justify-center gap-4">
+                <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+                <p className="text-slate-400 font-medium text-sm">Analyse des contrats...</p>
+              </div>
+            ) : (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50 text-slate-400 text-[10px] uppercase tracking-[0.2em]">
+                    <th className="px-6 py-5 font-black">Client (Email)</th>
+                    <th className="px-6 py-5 font-black">Véhicule Demandé</th>
+                    <th className="px-6 py-5 font-black">Type</th>
+                    <th className="px-6 py-5 font-black text-center">Détails & Docs</th>
+                    <th className="px-6 py-5 font-black text-center">Statut</th>
+                    <th className="px-6 py-5 font-black text-right">Décision</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </motion.div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {dossiers.map((d, idx) => {
+                    const client = d.user;
+                    const vDemande = d.vehicle;
+                    
+                    return (
+                      <motion.tr 
+                        key={d.id} 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.03 }}
+                        className="group hover:bg-slate-50/80 transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-slate-900">{client?.email || 'Inconnu'}</p>
+                          <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">ID Client : {d.userId}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-slate-900 uppercase">{vDemande?.marque || '---'} {vDemande?.modele || '---'}</p>
+                          <p className="text-[9px] text-slate-400 font-black tracking-widest uppercase">Ref: {d.vehicleId}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${vDemande?.categorie === 'LOCATION' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
+                            {vDemande?.categorie || 'N/A'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-center gap-2">
+                             <button 
+                               onClick={() => viewDossierDetails(d)}
+                               className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-900 hover:text-white transition-colors"
+                               title="Options choisies"
+                             >
+                                <Eye size={14} />
+                             </button>
+                             {d.documents && d.documents.length > 0 && (
+                               <button 
+                                 onClick={() => openDocument(d.documents[0])}
+                                 className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
+                                 title="Voir justificatif"
+                               >
+                                  <ExternalLink size={14} />
+                               </button>
+                             )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                           <div className="flex justify-center">
+                             <DossierStatusBadge status={d.statut} />
+                           </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {d.statut === 'EN_COURS' && (
+                              <>
+                                <button 
+                                  onClick={() => handleUpdateDossierStatus(d.id!, 'VALIDE')}
+                                  className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                                  title="Valider la demande"
+                                >
+                                   <Check size={16} />
+                                </button>
+                                <button 
+                                  onClick={() => handleUpdateDossierStatus(d.id!, 'REFUSE')}
+                                  className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                                  title="Refuser la demande"
+                                >
+                                   <X size={16} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                  {dossiers.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-20 text-center text-slate-400 italic">
+                        Aucun dossier en attente pour le moment.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Modal de Configuration */}
       <AnimatePresence>
@@ -536,6 +732,31 @@ const StatusBadge = ({ status }: { status?: string }) => {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-600 border border-rose-100 uppercase tracking-widest">
           <Ban size={12} /> Vendu
+        </span>
+      );
+    default:
+      return null;
+  }
+};
+
+const DossierStatusBadge = ({ status }: { status?: string }) => {
+  switch (status) {
+    case 'VALIDE':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase tracking-widest">
+          <CheckCircle2 size={12} /> Validé
+        </span>
+      );
+    case 'EN_COURS':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-widest">
+          <Clock size={12} /> À traiter
+        </span>
+      );
+    case 'REFUSE':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-rose-50 text-rose-600 border border-rose-100 uppercase tracking-widest">
+          <Ban size={12} /> Refusé
         </span>
       );
     default:

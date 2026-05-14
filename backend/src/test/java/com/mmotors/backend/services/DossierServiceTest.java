@@ -122,7 +122,7 @@ class DossierServiceTest {
         when(documentRepository.save(any(Document.class))).thenReturn(documentSaved);
 
         // When
-        Document result = dossierService.ajouterDocument(50L, "Contrat.pdf", "/docs/contrat_50.pdf");
+        Document result = dossierService.ajouterDocument(50L, "Contrat.pdf", "BASE64_CONTENT");
 
         // Then
         assertThat(result).isNotNull();

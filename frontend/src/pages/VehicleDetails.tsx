@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import type { Vehicle } from '../types/auth';
+import type { Vehicle, VehicleOption, Dossier } from '../types/auth';
+import { useAuth } from '../context/AuthContext';
 import { 
   ChevronLeft, 
   Car, 
@@ -16,15 +17,28 @@ import {
   Loader2,
   AlertCircle,
   Phone,
-  CalendarDays
+  CalendarDays,
+  Check,
+  Plus,
+  Upload,
+  FileText,
+  Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const VehicleDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [options, setOptions] = useState<VehicleOption[]>([]);
+  const [selectedOptionIds, setSelectedOptionIds] = useState<number[]>([]);
+  const [documents, setDocuments] = useState<string[]>([]);
+  const [existingDossier, setExistingDossier] = useState<Dossier | null>(null);
+  
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,8 +55,105 @@ const VehicleDetails: React.FC = () => {
       }
     };
 
+    const fetchOptions = async () => {
+      try {
+        const response = await api.get<VehicleOption[]>('/options');
+        setOptions(response.data);
+      } catch (err) {
+        console.error('Erreur chargement options:', err);
+      }
+    };
+
+    const fetchExistingDossier = async () => {
+      if (!user) return;
+      try {
+        // On récupère les dossiers de l'utilisateur
+        const response = await api.get<Dossier[]>(`/dossiers?userId=${user.id}`);
+        if (response.data && response.data.length > 0) {
+          // On filtre localement pour être certain de ne trouver que celui du véhicule actuel
+          const dossier = response.data.find(d => 
+            Number(d.vehicleId) === Number(id) || 
+            (d.vehicle && Number(d.vehicle.id) === Number(id))
+          );
+          if (dossier) setExistingDossier(dossier);
+        }
+      } catch (err: any) {
+        // En cas de 403 ou 404, on considère simplement qu'il n'y a pas de dossier (silencieux)
+        if (err.response?.status === 403 || err.response?.status === 404) {
+          console.log('Aucun dossier trouvé ou accès restreint (attendu)');
+        } else {
+          console.error('Erreur chargement dossier existant:', err);
+        }
+      }
+    };
+
     fetchVehicle();
-  }, [id]);
+    fetchOptions();
+    fetchExistingDossier();
+  }, [id, user]);
+
+  const totalPrice = useMemo(() => {
+    if (!vehicle) return 0;
+    const basePrice = Number(vehicle.prix) || 0;
+    const optionsTotal = options
+      .filter(o => selectedOptionIds.includes(o.id))
+      .reduce((sum, o) => sum + (Number(o.prix) || 0), 0);
+    return basePrice + optionsTotal;
+  }, [vehicle, options, selectedOptionIds]);
+
+  const filteredOptions = useMemo(() => {
+    if (!vehicle) return options;
+    // Si c'est une vente, on cache les types 'SERVICE' (Entretien, Assistance)
+    if (vehicle.categorie === 'VENTE') {
+      return options.filter(o => o.type !== 'SERVICE');
+    }
+    return options;
+  }, [vehicle, options]);
+
+  const handleToggleOption = (optionId: number) => {
+    setSelectedOptionIds(prev => 
+      prev.includes(optionId) 
+        ? prev.filter(id => id !== optionId) 
+        : [...prev, optionId]
+    );
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file: File) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDocuments(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleSubmitDossier = async () => {
+    if (!user || !vehicle || !vehicle.id) return;
+    
+    try {
+      setSubmitting(true);
+      const payload: Dossier = {
+        userId: user.id,
+        vehicleId: vehicle.id,
+        optionIds: selectedOptionIds,
+        documents: documents,
+        statut: 'EN_COURS'
+      };
+
+      const response = await api.post<Dossier>('/dossiers', payload);
+      setExistingDossier(response.data);
+      alert('Votre demande a été soumise avec succès !');
+    } catch (err) {
+      console.error('Erreur soumission dossier:', err);
+      alert('Une erreur est survenue lors de la soumission.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -138,6 +249,13 @@ const VehicleDetails: React.FC = () => {
                 <span className="px-5 py-2 rounded-full text-[10px] font-black bg-slate-900 text-white uppercase tracking-[0.15em] shadow-lg shadow-slate-200">
                   {vehicle.statut || 'DISPONIBLE'}
                 </span>
+                
+                {existingDossier && (
+                  <span className="px-5 py-2 rounded-full text-[10px] font-black bg-amber-500 text-white uppercase tracking-[0.15em] shadow-lg shadow-amber-100 flex items-center gap-2">
+                    <Clock size={14} />
+                    DEMANDE EN COURS
+                  </span>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -149,9 +267,11 @@ const VehicleDetails: React.FC = () => {
               
               <div className="p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Prix de l'offre</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                    {selectedOptionIds.length > 0 ? 'Total avec options' : "Prix de l'offre"}
+                  </p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-6xl font-black text-slate-900 tracking-tighter">{vehicle.prix.toLocaleString()}€</span>
+                    <span className="text-6xl font-black text-slate-900 tracking-tighter">{totalPrice.toLocaleString()}€</span>
                     {vehicle.categorie === 'LOCATION' && <span className="text-slate-400 font-black uppercase tracking-widest text-xs">/ MOIS TTC</span>}
                   </div>
                 </div>
@@ -160,6 +280,79 @@ const VehicleDetails: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Options et Personnalisation */}
+            {!existingDossier && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <Plus size={16} className="text-blue-600" />
+                    Personnalisation
+                  </h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">{selectedOptionIds.length} sélectionnée(s)</p>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-3">
+                  {filteredOptions.map(option => (
+                    <button 
+                      key={option.id}
+                      onClick={() => handleToggleOption(option.id)}
+                      className={`
+                        flex items-center justify-between p-4 rounded-2xl border transition-all text-left
+                        ${selectedOptionIds.includes(option.id) 
+                          ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                          : 'bg-white border-slate-100 hover:border-slate-200'}
+                      `}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${selectedOptionIds.includes(option.id) ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-300'}`}>
+                          <Check size={14} strokeWidth={4} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">{option.nom}</p>
+                          <p className="text-[10px] text-slate-400 font-medium">{option.description || 'Option confort Premium'}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs font-black text-blue-600">+{option.prix}€</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Documents justificatifs */}
+            {!existingDossier && (
+              <div className="space-y-6">
+                <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <FileText size={16} className="text-blue-600" />
+                  Pièces Justificatives
+                </h3>
+                
+                <div className="p-6 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center gap-4 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-slate-400 group">
+                    <Upload size={20} className="group-hover:text-blue-600 transition-colors" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-slate-900 uppercase tracking-tighter">Glissez vos documents ici</p>
+                    <p className="text-[10px] text-slate-400 font-medium mt-1">ID, Justificatif de domicile (Max 5Mo)</p>
+                  </div>
+                  <label className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-900 hover:text-white transition-all shadow-sm">
+                    Parcourir mes fichiers
+                    <input type="file" multiple onChange={handleFileUpload} className="hidden" />
+                  </label>
+
+                  {documents.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {documents.map((_, i) => (
+                        <div key={i} className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-lg">
+                          <CheckCircle2 size={16} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Caractéristiques */}
             <div className="grid grid-cols-2 gap-4">
@@ -182,14 +375,23 @@ const VehicleDetails: React.FC = () => {
                   </button>
                </div>
 
-               <button className={`
+               <button 
+                  onClick={handleSubmitDossier}
+                  disabled={submitting || !!existingDossier}
+                  className={`
                   w-full py-6 rounded-3xl font-black uppercase tracking-[0.4em] text-xs transition-all active:scale-95 shadow-2xl relative overflow-hidden group
-                  ${vehicle.categorie === 'LOCATION' ? 'bg-slate-900 text-white shadow-emerald-200' : 'bg-blue-600 text-white shadow-blue-200'}
+                  ${existingDossier 
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' 
+                    : vehicle.categorie === 'LOCATION' ? 'bg-slate-900 text-white shadow-emerald-200' : 'bg-blue-600 text-white shadow-blue-200'}
                `}>
                   <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity blur-2xl ${vehicle.categorie === 'LOCATION' ? 'bg-emerald-500' : 'bg-white/20'}`}></div>
                   <span className="relative z-10 flex items-center justify-center gap-3">
-                    {vehicle.categorie === 'LOCATION' ? 'Démarrer mon dossier LLD' : 'Reserver pour achat'}
-                    <ChevronLeft className="rotate-180" size={18} />
+                    {existingDossier 
+                      ? 'DEMANDE DÉJÀ TRANSMISE' 
+                      : submitting 
+                        ? <Loader2 className="animate-spin" /> 
+                        : vehicle.categorie === 'LOCATION' ? 'Démarrer mon dossier LLD' : 'Reserver pour achat'}
+                    {!existingDossier && !submitting && <ChevronLeft className="rotate-180" size={18} />}
                   </span>
                </button>
             </div>

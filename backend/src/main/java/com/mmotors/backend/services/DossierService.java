@@ -50,13 +50,13 @@ public class DossierService {
      * Ajoute un document justificatif à un dossier existant.
      */
     @Transactional
-    public Document ajouterDocument(Long dossierId, String nom, String chemin) {
+    public Document ajouterDocument(Long dossierId, String nom, String content) {
         Dossier dossier = dossierRepository.findById(dossierId)
                 .orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
 
         Document doc = new Document();
         doc.setNomFichier(nom);
-        doc.setCheminFichier(chemin);
+        doc.setContent(content);
         doc.setDossier(dossier);
 
         return documentRepository.save(doc);
@@ -71,12 +71,49 @@ public class DossierService {
                 .orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
         
         dossier.setStatut(nouveauStatut);
+
+        // Si le dossier est validé, on met à jour le statut du véhicule
+        if (nouveauStatut == DossierStatut.VALIDE) {
+            Vehicle vehicle = dossier.getVehicle();
+            if (vehicle.getCategorie() == VehicleCategory.LOCATION) {
+                vehicle.setStatut(VehicleStatus.LOUE);
+            } else {
+                vehicle.setStatut(VehicleStatus.VENDU);
+            }
+            vehicleRepository.save(vehicle);
+        }
+
         return dossierRepository.save(dossier);
+    }
+
+    public List<Dossier> getDossiersWithFilters(Long userId, Long vehicleId) {
+        if (userId != null && vehicleId != null) {
+            User user = userRepository.findById(userId).orElse(null);
+            Vehicle vehicle = vehicleRepository.findById(vehicleId).orElse(null);
+            if (user != null && vehicle != null) {
+                // On pourrait ajouter une méthode au repository pour ce cas précis
+                return dossierRepository.findAll().stream()
+                        .filter(d -> d.getUser().getId().equals(userId) && d.getVehicle().getId().equals(vehicleId))
+                        .collect(java.util.stream.Collectors.toList());
+            }
+        } else if (userId != null) {
+            return getDossiersByUtilisateur(userId);
+        } else if (vehicleId != null) {
+            // Filtrage par véhicule
+            return dossierRepository.findAll().stream()
+                    .filter(d -> d.getVehicle().getId().equals(vehicleId))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        return getAllDossiers();
     }
 
     public List<Dossier> getDossiersByUtilisateur(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
         return dossierRepository.findByUser(user);
+    }
+
+    public List<Dossier> getAllDossiers() {
+        return dossierRepository.findAll();
     }
 }

@@ -1,4 +1,4 @@
-package com.mmotors.backend.controller;
+package com.mmotors.backend.controllers;
 
 import com.mmotors.backend.entities.Document;
 import com.mmotors.backend.entities.Dossier;
@@ -20,6 +20,7 @@ import java.util.List;
 public class DossierController {
 
     private final DossierService dossierService;
+    private final com.mmotors.backend.services.UserService userService;
 
     /**
      * Création d'un dossier d'achat ou location.
@@ -35,7 +36,34 @@ public class DossierController {
     }
 
     /**
-     * Récupère tous les dossiers d'un utilisateur spécifique.
+     * Récupère les dossiers.
+     * Si userId est présent, filtre par utilisateur.
+     * Si vehicleId est présent, filtre par véhicule.
+     * Sinon, renvoie tous les dossiers (Admin).
+     */
+    @GetMapping
+    public List<Dossier> getDossiers(
+            @RequestParam(required = false) Long userId, 
+            @RequestParam(required = false) Long vehicleId,
+            java.security.Principal principal) {
+        
+        // Sécurité : Un client ne peut voir que SES propres dossiers
+        if (principal != null) {
+            com.mmotors.backend.entities.User currentUser = userService.findByEmail(principal.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+            
+            if (currentUser.getRole() == com.mmotors.backend.entities.UserRole.CLIENT) {
+                // Pour un client, on force le filtre sur son propre ID
+                return dossierService.getDossiersByUtilisateur(currentUser.getId());
+            }
+        }
+
+        return dossierService.getDossiersWithFilters(userId, vehicleId);
+    }
+
+    /**
+     * Récupère tous les dossiers d'un utilisateur spécifique (via PathVariable).
+     * Conservé pour compatibilité si nécessaire, mais getDossiers est plus flexible.
      */
     @GetMapping("/utilisateur/{userId}")
     public List<Dossier> getDossiersParUtilisateur(@PathVariable Long userId) {
@@ -47,7 +75,7 @@ public class DossierController {
      */
     @PostMapping("/{id}/documents")
     public Document ajouterDocument(@PathVariable Long id, @RequestBody DocumentRequest request) {
-        return dossierService.ajouterDocument(id, request.getNom(), request.getChemin());
+        return dossierService.ajouterDocument(id, request.getNom(), request.getContent());
     }
 
     /**
@@ -69,6 +97,6 @@ public class DossierController {
     @Data
     public static class DocumentRequest {
         private String nom;
-        private String chemin;
+        private String content;
     }
 }

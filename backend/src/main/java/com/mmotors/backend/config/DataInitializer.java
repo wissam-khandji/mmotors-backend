@@ -23,6 +23,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
+    private final com.mmotors.backend.repositories.OptionRepository optionRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
@@ -93,6 +94,16 @@ public class DataInitializer implements CommandLineRunner {
                 .imagePath(encodeImageToBase64("peugeot.jpg"))
                 .build();
             vehicleRepository.save(v3);
+        }
+
+        // 3. Initialisation des Options
+        if (optionRepository.count() == 0) {
+            System.out.println("Initialisation des options par défaut...");
+            
+            optionRepository.save(new Option(null, "Assurance Vol", 45.0, "SERVICE"));
+            optionRepository.save(new Option(null, "Assistance 24/7", 15.0, "SERVICE"));
+            optionRepository.save(new Option(null, "Entretien Premium", 80.0, "SERVICE"));
+            optionRepository.save(new Option(null, "Pack Connectivité", 10.0, "EQUIPEMENT"));
         }
     }
 
