@@ -62,7 +62,7 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(client);
         }
 
-        // 2. Initialisation des Véhicules
+        // Initialisation des Véhicules
         String teslaBase64 = new String(teslaRes.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         String bmwBase64 = new String(bmwRes.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         String peugeotBase64 = new String(peugeotRes.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
