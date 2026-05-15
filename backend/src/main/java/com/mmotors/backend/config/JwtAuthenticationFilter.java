@@ -15,9 +15,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 
-/**
- * Filtre de sécurité JWT pour intercepter toutes les requêtes.
- */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -25,15 +22,43 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtils jwtUtils;
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        boolean skip = request.getServletPath().startsWith("/api/auth/");
-        System.out.println("DEBUG: Checking path " + request.getServletPath() + " - skip=" + skip);
-        return skip;
-    }
-
-    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        final String userEmail;
+        
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        jwt = authHeader.substring(7);
+        
+        try {
+            userEmail = jwtUtils.extractUsername(jwt); 
+            String role = jwtUtils.extractRole(jwt); 
+
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                if (jwtUtils.isTokenValid(jwt)) {
+                    
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
+                    
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userEmail,
+                            null,
+                            Collections.singletonList(authority)
+                    );
+                    
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Erreur JWT : " + e.getMessage());
+        }
+
         filterChain.doFilter(request, response);
     }
 }
