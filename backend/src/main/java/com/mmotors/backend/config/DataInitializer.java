@@ -8,6 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import java.nio.charset.StandardCharsets;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,6 +29,15 @@ public class DataInitializer implements CommandLineRunner {
     private final VehicleRepository vehicleRepository;
     private final OptionRepository optionRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    
+    @Value("classpath:images/tesla_base64.txt")
+    private Resource teslaRes;
+
+    @Value("classpath:images/bmw_base64.txt")
+    private Resource bmwRes;
+
+    @Value("classpath:images/peugeot_base64.txt")
+    private Resource peugeotRes;
 
     @Override
     public void run(String... args) throws Exception {
@@ -51,6 +63,10 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // 2. Initialisation des Véhicules
+        String teslaBase64 = new String(teslaRes.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        String bmwBase64 = new String(bmwRes.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        String peugeotBase64 = new String(peugeotRes.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
         if (vehicleRepository.count() == 0) {
             System.out.println("Initialisation du catalogue de véhicules...");
             
