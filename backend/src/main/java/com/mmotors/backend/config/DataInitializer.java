@@ -29,15 +29,6 @@ public class DataInitializer implements CommandLineRunner {
     private final VehicleRepository vehicleRepository;
     private final OptionRepository optionRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    
-    @Value("classpath:images/tesla_base64.txt")
-    private Resource teslaRes;
-
-    @Value("classpath:images/bmw_base64.txt")
-    private Resource bmwRes;
-
-    @Value("classpath:images/peugeot_base64.txt")
-    private Resource peugeotRes;
 
     @Override
     public void run(String... args) throws Exception {
@@ -62,11 +53,6 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(client);
         }
 
-        // Initialisation des Véhicules
-        String teslaBase64 = new String(teslaRes.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        String bmwBase64 = new String(bmwRes.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        String peugeotBase64 = new String(peugeotRes.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-
         if (vehicleRepository.count() == 0) {
             System.out.println("Initialisation du catalogue de véhicules...");
             
@@ -80,7 +66,7 @@ public class DataInitializer implements CommandLineRunner {
                 .transmission("Automatique")
                 .categorie(VehicleCategory.VENTE)
                 .statut(VehicleStatus.DISPONIBLE)
-                .imagePath(teslaBase64)
+                .imagePath("https://cdn.automobile-propre.com/cdn-cgi/image/width=384,format=auto,fit=scale-down/https://cdn.automobile-propre.com/uploads/2013/08/Tesla-Model-3-18.jpg")
                 .build();
             vehicleRepository.save(v1);
 
@@ -94,7 +80,7 @@ public class DataInitializer implements CommandLineRunner {
                 .transmission("Automatique")
                 .categorie(VehicleCategory.LOCATION)
                 .statut(VehicleStatus.DISPONIBLE)
-                .imagePath(bmwBase64)
+                .imagePath("https://static.moniteurautomobile.be/imgcontrol/images_tmp/clients/moniteur/c680-d465/content/medias/images/news/43000/200/0/i4-1.jpg")
                 .build();
             vehicleRepository.save(v2);
 
@@ -108,7 +94,7 @@ public class DataInitializer implements CommandLineRunner {
                 .transmission("Automatique")
                 .categorie(VehicleCategory.VENTE)
                 .statut(VehicleStatus.RESERVE)
-                .imagePath(peugeotBase64)
+                .imagePath("https://www.peugeot.be/content/dam/peugeot/master/b2c/our-range/showroom/208/immersive-update/e-208/PEUGEOT_E208_ORDER_2_test2.jpg")
                 .build();
             vehicleRepository.save(v3);
         }
