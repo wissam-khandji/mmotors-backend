@@ -8,18 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import java.nio.charset.StandardCharsets;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Base64;
 
 /**
- * Initialisation des données au démarrage de l'application.
+ * Initialisation sécurisée des données de production au démarrage de l'application.
  */
 @Component
 @RequiredArgsConstructor
@@ -32,9 +23,10 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // 1. Initialisation des Utilisateurs
+        
+        // 1. Initialisation des Utilisateurs (uniquement si la table est vide)
         if (userRepository.count() == 0) {
-            System.out.println("Initialisation des utilisateurs par défaut...");
+            System.out.println("PostgreSQL : Initialisation des utilisateurs par défaut...");
             
             User admin = new User();
             admin.setNom("System");
@@ -53,8 +45,9 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(client);
         }
 
+        // 2. Initialisation du catalogue de véhicules (uniquement si la table est vide)
         if (vehicleRepository.count() == 0) {
-            System.out.println("Initialisation du catalogue de véhicules...");
+            System.out.println("PostgreSQL : Initialisation du catalogue de véhicules...");
             
             Vehicle v1 = Vehicle.builder()
                 .marque("Tesla")
@@ -99,9 +92,9 @@ public class DataInitializer implements CommandLineRunner {
             vehicleRepository.save(v3);
         }
 
-        // 3. Initialisation des Options avec prix
+        // 3. Initialisation des Options (uniquement si la table est vide)
         if (optionRepository.count() == 0) {
-            System.out.println("Initialisation des options avec prix bidons...");
+            System.out.println("PostgreSQL : Initialisation des options de services...");
             
             optionRepository.save(new Option(null, "Assurance Vol", 20.0, "SERVICE"));
             optionRepository.save(new Option(null, "Assistance 24/7", 30.0, "SERVICE"));
@@ -110,29 +103,4 @@ public class DataInitializer implements CommandLineRunner {
             optionRepository.save(new Option(null, "Extension Garantie 2 ans", 50.0, "SERVICE"));
         }
     }
-
-    /**
-     * Encode une image locale en chaîne Base64 pour le stockage en DB.
-     * Les images doivent être placées dans src/main/resources/static/images/
-     */
-    private String encodeImageToBase64(String imageName) {
-        try {
-            // Chemin vers les ressources statiques
-            Path path = Paths.get("src/main/resources/static/images/" + imageName);
-            
-            if (Files.exists(path)) {
-                byte[] imageBytes = Files.readAllBytes(path);
-                String base64 = Base64.getEncoder().encodeToString(imageBytes);
-                // Préfixe pour affichage direct dans la balise <img src="...">
-                return "data:image/jpeg;base64," + base64;
-            } else {
-                System.err.println("Image manquante : " + path.toAbsolutePath());
-            }
-        } catch (IOException e) {
-            System.err.println("Erreur lors de l'encodage de l'image " + imageName + " : " + e.getMessage());
-        }
-        return ""; // Retourne une chaîne vide si l'image n'est pas trouvée ou erreur
-    }
-    
 }
-

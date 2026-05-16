@@ -19,15 +19,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-/**
- * Tests unitaires pour le service UserService.
- * 
- * NOTE PÉDAGOGIQUE SUR LES MOCKS :
- * On utilise des 'Mocks' (doublures) au lieu d'une vraie base de données car :
- * 1. Isolation : On teste uniquement la logique de UserService, pas le comportement du Repository ou de la DB.
- * 2. Vitesse : Les tests s'exécutent en millisecondes sans le coût d'initialisation d'une base.
- * 3. Prévisibilité : On peut forcer le Repository à retourner exactement ce qu'on veut (ex: simuler un email déjà pris).
- */
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
@@ -43,16 +34,23 @@ class UserServiceTest {
     @Test
     @DisplayName("Inscription : Succès quand l'email n'existe pas")
     void register_ShouldSaveUser_WhenEmailDoesNotExist() {
-        // GIVEN (ÉTANT DONNÉ)
-        User user = new User(null, "Dupont", "Jean", "jean@test.com", "password123", UserRole.CLIENT);
+        // GIVEN
+        User user = User.builder()
+                .email("jean@test.com")
+                .motDePasse("password123")
+                .nom("Dupont")
+                .prenom("Jean")
+                .role(UserRole.CLIENT)
+                .build();
+
         given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.empty());
         given(passwordEncoder.encode("password123")).willReturn("hashedPassword");
         given(userRepository.save(any(User.class))).willReturn(user);
 
-        // WHEN (QUAND)
+        // WHEN
         User savedUser = userService.register(user);
 
-        // THEN (ALORS)
+        // THEN
         assertThat(savedUser).isNotNull();
         assertThat(user.getMotDePasse()).isEqualTo("hashedPassword");
         verify(userRepository, times(1)).save(user);
@@ -62,7 +60,14 @@ class UserServiceTest {
     @DisplayName("Inscription : Erreur quand l'email existe déjà")
     void register_ShouldThrowException_WhenEmailAlreadyExists() {
         // GIVEN
-        User user = new User(null, "Dupont", "Jean", "jean@test.com", "password123", UserRole.CLIENT);
+        User user = User.builder()
+                .email("jean@test.com")
+                .motDePasse("password123")
+                .nom("Dupont")
+                .prenom("Jean")
+                .role(UserRole.CLIENT)
+                .build();
+
         given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
 
         // WHEN & THEN
@@ -79,7 +84,15 @@ class UserServiceTest {
         // GIVEN
         String email = "jean@test.com";
         String password = "password123";
-        User user = new User(1L, "Dupont", "Jean", email, "hashedPassword", UserRole.CLIENT);
+        
+        User user = User.builder()
+                .id(1L)
+                .email(email)
+                .motDePasse("hashedPassword")
+                .nom("Dupont")
+                .prenom("Jean")
+                .role(UserRole.CLIENT)
+                .build();
         
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
         given(passwordEncoder.matches(password, "hashedPassword")).willReturn(true);
@@ -98,7 +111,15 @@ class UserServiceTest {
         // GIVEN
         String email = "jean@test.com";
         String password = "wrongPassword";
-        User user = new User(1L, "Dupont", "Jean", email, "hashedPassword", UserRole.CLIENT);
+        
+        User user = User.builder()
+                .id(1L)
+                .email(email)
+                .motDePasse("hashedPassword")
+                .nom("Dupont")
+                .prenom("Jean")
+                .role(UserRole.CLIENT)
+                .build();
 
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
         given(passwordEncoder.matches(password, "hashedPassword")).willReturn(false);

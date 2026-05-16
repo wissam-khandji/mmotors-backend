@@ -17,10 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Tests unitaires validant l'intégrité des relations entre les modules User, Vehicle et Option.
- * Ces tests garantissent que les dossiers sont créés proprement avec toutes leurs dépendances.
- */
 @ExtendWith(MockitoExtension.class)
 class DossierServiceTest {
 
@@ -46,9 +42,7 @@ class DossierServiceTest {
     @DisplayName("creerDossier_Success : Vérifie l'intégrité relationnelle lors de la création d'un dossier")
     void creerDossier_Success() {
         // Given
-        User user = new User();
-        user.setId(1L);
-        user.setEmail("client@mmotors.com");
+        User user = User.builder().id(1L).email("client@mmotors.com").build();
 
         Vehicle vehicle = Vehicle.builder()
                 .id(1L)
@@ -98,8 +92,7 @@ class DossierServiceTest {
     @DisplayName("creerDossier_VehicleNotFound : Vérifie que l'exception est levée si le véhicule n'existe pas")
     void creerDossier_VehicleNotFound() {
         // Given
-        User user = new User();
-        user.setId(1L);
+        User user = User.builder().id(1L).build();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(vehicleRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -137,6 +130,14 @@ class DossierServiceTest {
         Dossier dossier = new Dossier();
         dossier.setId(1L);
         dossier.setStatut(DossierStatut.EN_ATTENTE);
+        
+        // On crée un faux véhicule lié pour éviter le NullPointerException
+        Vehicle vehicle = Vehicle.builder()
+                .id(1L)
+                .categorie(VehicleCategory.VENTE)
+                .statut(VehicleStatus.DISPONIBLE)
+                .build();
+        dossier.setVehicle(vehicle);
         
         when(dossierRepository.findById(1L)).thenReturn(Optional.of(dossier));
         when(dossierRepository.save(any(Dossier.class))).thenAnswer(inv -> inv.getArgument(0));
