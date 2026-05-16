@@ -86,12 +86,12 @@ public class DossierService {
         return dossierRepository.save(dossier);
     }
 
+    @Transactional(readOnly = true)
     public List<Dossier> getDossiersWithFilters(Long userId, Long vehicleId) {
         if (userId != null && vehicleId != null) {
             User user = userRepository.findById(userId).orElse(null);
             Vehicle vehicle = vehicleRepository.findById(vehicleId).orElse(null);
             if (user != null && vehicle != null) {
-                // On pourrait ajouter une méthode au repository pour ce cas précis
                 return dossierRepository.findAll().stream()
                         .filter(d -> d.getUser().getId().equals(userId) && d.getVehicle().getId().equals(vehicleId))
                         .collect(java.util.stream.Collectors.toList());
@@ -99,7 +99,6 @@ public class DossierService {
         } else if (userId != null) {
             return getDossiersByUtilisateur(userId);
         } else if (vehicleId != null) {
-            // Filtrage par véhicule
             return dossierRepository.findAll().stream()
                     .filter(d -> d.getVehicle().getId().equals(vehicleId))
                     .collect(java.util.stream.Collectors.toList());
@@ -107,12 +106,14 @@ public class DossierService {
         return getAllDossiers();
     }
 
+    @Transactional(readOnly = true)
     public List<Dossier> getDossiersByUtilisateur(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
         return dossierRepository.findByUser(user);
     }
 
+    @Transactional(readOnly = true)
     public List<Dossier> getAllDossiers() {
         return dossierRepository.findAll();
     }

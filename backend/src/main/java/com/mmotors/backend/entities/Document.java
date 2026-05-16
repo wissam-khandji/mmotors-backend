@@ -21,8 +21,8 @@ public class Document {
     @Column(nullable = false)
     private String nomFichier;
 
-    @Lob
-    @Column(columnDefinition = "LONGTEXT")
+    
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     /**

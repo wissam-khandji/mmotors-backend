@@ -44,7 +44,6 @@ public class Vehicle {
 
     private String transmission;
 
-    @Lob 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String imagePath;
 }
